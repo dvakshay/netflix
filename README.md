@@ -10,15 +10,15 @@ An interactive Netflix Data Analytics and Machine Learning Recommendation System
 
 # 📌 Features
 
-✅ Interactive Netflix Dashboard
-✅ Search Movies & TV Shows
-✅ Dynamic Filters
-✅ KPI Metrics
-✅ Ratings Analysis
-✅ Country-wise Analysis
-✅ Machine Learning Recommendation System
-✅ Netflix-style Dark UI
-✅ Interactive Charts & Visualizations
+1. Interactive Netflix Dashboard
+2. Search Movies & TV Shows
+3. Dynamic Filters
+4. KPI Metrics
+5. Ratings Analysis
+6. Country-wise Analysis
+7. Machine Learning Recommendation System
+8. Netflix-style Dark UI
+9. Interactive Charts & Visualizations
 
 ---
 
