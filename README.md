@@ -1,14 +1,14 @@
-# 🎬 Netflix Analytics & Recommendation System
+# Netflix Analytics & Recommendation System
 
 An interactive Netflix Data Analytics and Machine Learning Recommendation System built using Python, Streamlit, Pandas, Plotly, and Scikit-learn.
 
-## 🚀 Live Demo
+## Live Demo
 
 🌐 Live App: https://netflix-tuadtu9ldwtidphngj3let.streamlit.app/
 
 ---
 
-# 📌 Features
+# Features
 
 1. Interactive Netflix Dashboard
 2. Search Movies & TV Shows
@@ -22,7 +22,7 @@ An interactive Netflix Data Analytics and Machine Learning Recommendation System
 
 ---
 
-# 🧠 Machine Learning Used
+# Machine Learning Used
 
 This project uses a **Content-Based Recommendation System** powered by:
 
@@ -38,7 +38,7 @@ The system recommends similar Netflix content based on:
 
 ---
 
-# 🛠️ Tech Stack
+# Tech Stack
 
 * Python
 * Pandas
@@ -50,7 +50,7 @@ The system recommends similar Netflix content based on:
 
 ---
 
-# 📊 Dashboard Sections
+# Dashboard Sections
 
 * Movies vs TV Shows
 * Ratings Distribution
@@ -61,8 +61,8 @@ The system recommends similar Netflix content based on:
 
 ---
 
-# 📷 Screenshots
-## 📷 Screenshots
+# Screenshots
+## Screenshots
 
 ### Dashboard Home
 ![Dashboard](images/dashboard.png)
@@ -79,7 +79,7 @@ The system recommends similar Netflix content based on:
 
 ---
 
-# 🚀 Installation
+# Installation
 
 ```bash
 git clone https://github.com/dvakshay/netflix.git
@@ -93,6 +93,6 @@ streamlit run app.py
 
 ---
 
-# 👨‍💻 Author
+# Author
 
 D V Akshay Kumar
