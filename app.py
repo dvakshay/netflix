@@ -1,15 +1,17 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
-# ---------------- PAGE CONFIG ----------------
+# PAGE CONFIG
 st.set_page_config(
     page_title="Netflix Dashboard",
     page_icon="🎬",
     layout="wide"
 )
 
-# ---------------- CUSTOM CSS ----------------
+# CUSTOM CSS
 st.markdown("""
 <style>
 .main {
@@ -17,182 +19,204 @@ st.markdown("""
     color: white;
 }
 
-h1, h2, h3 {
-    color: #E50914;
+.stApp {
+    background-color: #141414;
+}
+
+h1, h2, h3, h4 {
+    color: white;
 }
 
 [data-testid="stSidebar"] {
     background-color: #000000;
 }
 
-[data-testid="metric-container"] {
+.metric-card {
     background-color: #1f1f1f;
+    padding: 20px;
     border-radius: 10px;
-    padding: 15px;
-    border: 1px solid #333;
+    text-align: center;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# ---------------- LOAD DATA ----------------
+# LOAD DATA
 df = pd.read_csv("netflix_titles.csv")
 
-# ---------------- CLEAN DATA ----------------
-df['country'] = df['country'].fillna("Unknown")
-df['rating'] = df['rating'].fillna("Unknown")
-df['director'] = df['director'].fillna("Unknown")
-df['cast'] = df['cast'].fillna("Unknown")
+# CLEANING
+df.fillna("Unknown", inplace=True)
 
-# ---------------- TITLE ----------------
-st.title("🎬 Netflix Analytics Dashboard V3")
+# SIDEBAR
+st.sidebar.title("🎯 Netflix Filters")
 
-st.markdown("### Interactive Netflix Data Analysis Dashboard")
+search = st.sidebar.text_input("Search Title")
 
-# ---------------- SIDEBAR ----------------
-st.sidebar.header("🎯 Filter Options")
-
-# Search box
-search_title = st.sidebar.text_input("🔍 Search Title")
-
-# Type filter
 type_filter = st.sidebar.multiselect(
     "Select Type",
-    options=df['type'].unique(),
-    default=df['type'].unique()
+    options=df["type"].unique(),
+    default=df["type"].unique()
 )
 
-# Country filter
 country_filter = st.sidebar.multiselect(
     "Select Country",
-    options=df['country'].unique(),
-    default=df['country'].unique()[:10]
+    options=df["country"].unique(),
+    default=df["country"].unique()[:10]
 )
 
-# ---------------- FILTER DATA ----------------
+rating_filter = st.sidebar.multiselect(
+    "Select Rating",
+    options=df["rating"].unique(),
+    default=df["rating"].unique()
+)
+
+# FILTER DATA
 filtered_df = df[
-    (df['type'].isin(type_filter)) &
-    (df['country'].isin(country_filter))
+    (df["type"].isin(type_filter)) &
+    (df["country"].isin(country_filter)) &
+    (df["rating"].isin(rating_filter))
 ]
 
-# Search filter
-if search_title:
+if search:
     filtered_df = filtered_df[
-        filtered_df['title'].str.contains(search_title, case=False)
+        filtered_df["title"].str.contains(search, case=False)
     ]
 
-# ---------------- KPI CARDS ----------------
-movies_count = filtered_df[filtered_df['type'] == 'Movie'].shape[0]
-tv_count = filtered_df[filtered_df['type'] == 'TV Show'].shape[0]
-country_count = filtered_df['country'].nunique()
-director_count = filtered_df['director'].nunique()
+# TITLE
+st.title("🎬 Netflix Analytics Dashboard V4")
+
+st.markdown("---")
+
+# KPI SECTION
+movies = filtered_df[filtered_df["type"] == "Movie"].shape[0]
+tvshows = filtered_df[filtered_df["type"] == "TV Show"].shape[0]
+countries = filtered_df["country"].nunique()
+directors = filtered_df["director"].nunique()
 
 col1, col2, col3, col4 = st.columns(4)
 
-col1.metric("🎬 Movies", movies_count)
-col2.metric("📺 TV Shows", tv_count)
-col3.metric("🌍 Countries", country_count)
-col4.metric("🎥 Directors", director_count)
+col1.metric("🎥 Movies", movies)
+col2.metric("📺 TV Shows", tvshows)
+col3.metric("🌍 Countries", countries)
+col4.metric("🎬 Directors", directors)
 
-st.divider()
+st.markdown("---")
 
-# ---------------- DATA PREVIEW ----------------
+# DATASET PREVIEW
 st.subheader("📄 Dataset Preview")
 st.dataframe(filtered_df.head())
 
-# ---------------- MOVIES VS TV SHOWS ----------------
-st.subheader("🎭 Movies vs TV Shows")
+# CHARTS
+col1, col2 = st.columns(2)
 
-type_counts = filtered_df['type'].value_counts()
+# PIE CHART
+with col1:
+    type_counts = filtered_df["type"].value_counts()
 
-fig1 = px.pie(
-    values=type_counts.values,
-    names=type_counts.index,
-    title="Content Distribution",
-    color_discrete_sequence=['#E50914', '#B81D24']
-)
+    fig1 = px.pie(
+        values=type_counts.values,
+        names=type_counts.index,
+        title="Movies vs TV Shows",
+        color_discrete_sequence=px.colors.sequential.Reds
+    )
 
-st.plotly_chart(fig1, width='stretch')
+    st.plotly_chart(fig1, width='stretch')
 
-# ---------------- RATINGS CHART ----------------
-st.subheader("⭐ Ratings Distribution")
+# BAR CHART
+with col2:
+    rating_counts = filtered_df["rating"].value_counts().reset_index()
+    rating_counts.columns = ["Rating", "Count"]
 
-rating_counts = filtered_df['rating'].value_counts().reset_index()
-rating_counts.columns = ['Rating', 'Count']
+    fig2 = px.bar(
+        rating_counts,
+        x="Rating",
+        y="Count",
+        color="Count",
+        title="Ratings Distribution",
+        color_continuous_scale="reds"
+    )
 
-fig2 = px.bar(
-    rating_counts,
-    x='Rating',
-    y='Count',
-    color='Count',
-    title='Ratings Distribution',
-    color_continuous_scale='Reds'
-)
+    st.plotly_chart(fig2, width='stretch')
 
-st.plotly_chart(fig2, width='stretch')
-
-# ---------------- TOP COUNTRIES ----------------
+# TOP COUNTRIES
 st.subheader("🌍 Top Countries")
 
-country_counts = (
-    filtered_df['country']
+top_countries = (
+    filtered_df["country"]
     .value_counts()
     .head(10)
     .reset_index()
 )
 
-country_counts.columns = ['Country', 'Count']
+top_countries.columns = ["Country", "Count"]
 
 fig3 = px.bar(
-    country_counts,
-    x='Country',
-    y='Count',
-    color='Count',
-    title='Top 10 Countries',
-    color_continuous_scale='Reds'
+    top_countries,
+    x="Country",
+    y="Count",
+    color="Count",
+    color_continuous_scale="reds"
 )
 
 st.plotly_chart(fig3, width='stretch')
 
-# ---------------- RELEASE YEAR TREND ----------------
-st.subheader("📈 Content Release Trend")
+# =========================
+# RECOMMENDATION SYSTEM
+# =========================
 
-year_counts = (
-    filtered_df['release_year']
-    .value_counts()
-    .sort_index()
-    .reset_index()
+st.markdown("---")
+st.header("🎯 Netflix Recommendation System")
+
+# CREATE TAGS
+df["tags"] = (
+    df["listed_in"].astype(str) + " " +
+    df["description"].astype(str)
 )
 
-year_counts.columns = ['Year', 'Count']
+# TF-IDF VECTORIZE
+tfidf = TfidfVectorizer(stop_words="english")
 
-fig4 = px.line(
-    year_counts,
-    x='Year',
-    y='Count',
-    title='Content Released Over Years'
+tfidf_matrix = tfidf.fit_transform(df["tags"])
+
+# COSINE SIMILARITY
+cosine_sim = cosine_similarity(tfidf_matrix)
+
+# TITLE LIST
+titles = df["title"].drop_duplicates().tolist()
+
+selected_movie = st.selectbox(
+    "Choose a Movie or TV Show",
+    titles
 )
 
-st.plotly_chart(fig4, width='stretch')
+# RECOMMEND FUNCTION
+def recommend(title):
 
-# ---------------- TOP DIRECTORS ----------------
-st.subheader("🎥 Top Directors")
+    try:
+        idx = df[df["title"] == title].index[0]
 
-director_counts = (
-    filtered_df['director']
-    .value_counts()
-    .head(10)
-    .reset_index()
-)
+        sim_scores = list(enumerate(cosine_sim[idx]))
 
-director_counts.columns = ['Director', 'Count']
+        sim_scores = sorted(
+            sim_scores,
+            key=lambda x: x[1],
+            reverse=True
+        )
 
-fig5 = px.bar(
-    director_counts,
-    x='Director',
-    y='Count',
-    color='Count',
-    title='Top Directors',
-    color_continuous_scale='Reds'
-)
+        sim_scores = sim_scores[1:6]
 
-st.plotly_chart(fig5, width='stretch')
+        movie_indices = [i[0] for i in sim_scores]
+
+        return df["title"].iloc[movie_indices]
+
+    except:
+        return []
+
+# SHOW RECOMMENDATIONS
+if st.button("Recommend"):
+
+    recommendations = recommend(selected_movie)
+
+    st.subheader("🎬 Recommended Titles")
+
+    for movie in recommendations:
+        st.write("✅", movie)
